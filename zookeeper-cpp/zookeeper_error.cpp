@@ -5,7 +5,7 @@
 namespace zookeeper {
 
 ZooException::ZooException(int code)
-: std::runtime_error("Zoo Exception"), zoo_error_code_(code) {
+: std::runtime_error(zerror(code)), zoo_error_code_(code) {
 }
 
 ZooException::ZooException(int code, const char* what)

@@ -1,6 +1,7 @@
 #pragma once
 #include <zookeeper/zookeeper.h>
 #include <string>
+#include <vector>
 
 //struct zhandle_t;
 
@@ -22,6 +23,8 @@ public:
 
 };
 
+typedef Stat NodeStat;
+
 class ZooKeeper {
 public:
   ZooKeeper(const std::string& server_hosts,
@@ -31,7 +34,21 @@ public:
 
   bool is_connected();
 
-  bool Exists(const char* path);
+  bool Exists(const std::string& path, NodeStat* = nullptr);
+
+  NodeStat Stat(const std::string& path);
+
+  std::string Create(const std::string& path,
+                     const std::string& value = std::string(),
+                     int flag = 0);
+
+  void Delete(const std::string& path);
+
+  void Set(const std::string&path, const std::string& value);
+
+  std::string Get(const std::string& path);
+
+  std::vector<std::string> GetChildren(const std::string& parent_path);
 
 private:
   zhandle_t* zoo_handle_ = nullptr;

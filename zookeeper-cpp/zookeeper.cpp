@@ -6,6 +6,9 @@
 
 namespace zookeeper {
 
+#define CHECK_ZOOCODE_AND_THROW(code)  \
+  if (code != ZOK) { throw ZooException(code); }
+
 void ZooKeeper::GlobalWatchFunc(zhandle_t* h, int type, int state, const char* path, void* ctx) {
   auto self = static_cast<ZooKeeper*>(ctx);
   self->WatchHandler(type, state, path);
@@ -73,17 +76,103 @@ void ZooKeeper::WatchHandler(int type, int state, const char* path) {
   }
 }
 
-bool ZooKeeper::Exists(const char* path) {
-  auto zoo_code = zoo_exists(zoo_handle_, path, false, nullptr);
-  switch (zoo_code) {
-  case ZOK:
-    return true;
-  case ZNONODE:
+bool ZooKeeper::Exists(const std::string& path, NodeStat* stat) {
+  auto zoo_code = zoo_exists(zoo_handle_, path.c_str(), false, stat);
+  if (zoo_code == ZNONODE) {
     return false;
-  default:
-    throw ZooException(zoo_code);
+  } else {
+    CHECK_ZOOCODE_AND_THROW(zoo_code);
+    return true;
   }
 }
+
+NodeStat ZooKeeper::Stat(const std::string& path) {
+  NodeStat stat;
+  auto zoo_code = zoo_exists(zoo_handle_, path.c_str(), false, &stat);
+  CHECK_ZOOCODE_AND_THROW(zoo_code);
+
+  return stat;
+}
+
+std::string ZooKeeper::Create(const std::string& path, const std::string& value, int flag) {
+  std::string path_buffer;
+  path_buffer.resize(path.size() + 64);
+
+  auto zoo_code = zoo_create(zoo_handle_,
+                             path.c_str(),
+                             value.data(),
+                             value.size(),
+                             &ZOO_OPEN_ACL_UNSAFE,
+                             flag,
+                             const_cast<char*>(path_buffer.data()),
+                             path_buffer.size());
+
+  CHECK_ZOOCODE_AND_THROW(zoo_code);
+
+  path_buffer.resize(strlen(path_buffer.data()));
+  return path_buffer;
+}
+
+void ZooKeeper::Delete(const std::string& path) {
+  NodeStat stat;
+  if (!Exists(path.c_str(), &stat)) {
+    throw ZooException(ZNONODE);
+  }
+
+  auto zoo_code = zoo_delete(zoo_handle_, path.c_str(), stat.version);
+  CHECK_ZOOCODE_AND_THROW(zoo_code);
+}
+
+std::string ZooKeeper::Get(const std::string& path) {
+  std::string value_buffer;
+
+  auto node_stat = Stat(path);
+
+  value_buffer.resize(node_stat.dataLength);
+
+  int buffer_len = value_buffer.size();
+  auto zoo_code = zoo_get(zoo_handle_,
+                         path.c_str(),
+                         0,
+                         const_cast<char*>(value_buffer.data()),
+                         &buffer_len,
+                         &node_stat);
+
+  CHECK_ZOOCODE_AND_THROW(zoo_code);
+
+  value_buffer.resize(buffer_len);
+  return value_buffer;
+}
+
+void ZooKeeper::Set(const std::string& path, const std::string& value) {
+  auto node_stat = Stat(path);
+
+  auto zoo_code = zoo_set(zoo_handle_,
+                          path.c_str(),
+                          value.data(),
+                          value.size(),
+                          node_stat.version);
+
+  CHECK_ZOOCODE_AND_THROW(zoo_code);
+}
+
+std::vector<std::string> ZooKeeper::GetChildren(const std::string& parent_path) {
+  std::vector<std::string> children;
+
+  struct String_vector child_vec;
+
+  auto zoo_code = zoo_get_children(zoo_handle_, parent_path.c_str(), 0, &child_vec);
+  CHECK_ZOOCODE_AND_THROW(zoo_code);
+
+  children.reserve(child_vec.count);
+  for (int i = 0; i < child_vec.count; ++i) {
+    children.push_back(child_vec.data[i]);
+  }
+
+  // TODO: release child_vec
+  return children;
+}
+
 
 }
 
