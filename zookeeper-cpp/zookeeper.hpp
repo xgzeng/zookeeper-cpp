@@ -34,7 +34,7 @@ public:
 
   bool is_connected();
 
-  bool Exists(const std::string& path, NodeStat* = nullptr);
+  bool Exists(const std::string& path, bool watch = false, NodeStat* = nullptr);
 
   NodeStat Stat(const std::string& path);
 
@@ -46,9 +46,9 @@ public:
 
   void Set(const std::string&path, const std::string& value);
 
-  std::string Get(const std::string& path);
+  std::string Get(const std::string& path, bool watch = false);
 
-  std::vector<std::string> GetChildren(const std::string& parent_path);
+  std::vector<std::string> GetChildren(const std::string& parent_path, bool watch = false);
 
 private:
   zhandle_t* zoo_handle_ = nullptr;

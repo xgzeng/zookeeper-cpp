@@ -76,8 +76,8 @@ void ZooKeeper::WatchHandler(int type, int state, const char* path) {
   }
 }
 
-bool ZooKeeper::Exists(const std::string& path, NodeStat* stat) {
-  auto zoo_code = zoo_exists(zoo_handle_, path.c_str(), false, stat);
+bool ZooKeeper::Exists(const std::string& path, bool watch, NodeStat* stat) {
+  auto zoo_code = zoo_exists(zoo_handle_, path.c_str(), watch, stat);
   if (zoo_code == ZNONODE) {
     return false;
   } else {
@@ -115,7 +115,7 @@ std::string ZooKeeper::Create(const std::string& path, const std::string& value,
 
 void ZooKeeper::Delete(const std::string& path) {
   NodeStat stat;
-  if (!Exists(path.c_str(), &stat)) {
+  if (!Exists(path.c_str(), false, &stat)) {
     throw ZooException(ZNONODE);
   }
 
@@ -123,7 +123,7 @@ void ZooKeeper::Delete(const std::string& path) {
   CHECK_ZOOCODE_AND_THROW(zoo_code);
 }
 
-std::string ZooKeeper::Get(const std::string& path) {
+std::string ZooKeeper::Get(const std::string& path, bool watch) {
   std::string value_buffer;
 
   auto node_stat = Stat(path);
@@ -132,11 +132,11 @@ std::string ZooKeeper::Get(const std::string& path) {
 
   int buffer_len = value_buffer.size();
   auto zoo_code = zoo_get(zoo_handle_,
-                         path.c_str(),
-                         0,
-                         const_cast<char*>(value_buffer.data()),
-                         &buffer_len,
-                         &node_stat);
+                          path.c_str(),
+                          watch,
+                          const_cast<char*>(value_buffer.data()),
+                          &buffer_len,
+                          &node_stat);
 
   CHECK_ZOOCODE_AND_THROW(zoo_code);
 
@@ -156,12 +156,12 @@ void ZooKeeper::Set(const std::string& path, const std::string& value) {
   CHECK_ZOOCODE_AND_THROW(zoo_code);
 }
 
-std::vector<std::string> ZooKeeper::GetChildren(const std::string& parent_path) {
+std::vector<std::string> ZooKeeper::GetChildren(const std::string& parent_path, bool watch) {
   std::vector<std::string> children;
 
   struct String_vector child_vec;
 
-  auto zoo_code = zoo_get_children(zoo_handle_, parent_path.c_str(), 0, &child_vec);
+  auto zoo_code = zoo_get_children(zoo_handle_, parent_path.c_str(), watch, &child_vec);
   CHECK_ZOOCODE_AND_THROW(zoo_code);
 
   children.reserve(child_vec.count);
