@@ -3,8 +3,6 @@
 #include <string>
 #include <vector>
 
-//struct zhandle_t;
-
 namespace zookeeper {
 
 class ZooWatcher {
@@ -31,6 +29,10 @@ public:
             ZooWatcher* global_watcher = nullptr);
 
   ~ZooKeeper();
+
+  // disable copy
+  ZooKeeper(const ZooKeeper&) = delete;
+  ZooKeeper& operator=(const ZooKeeper&) = delete;
 
   bool is_connected();
 
