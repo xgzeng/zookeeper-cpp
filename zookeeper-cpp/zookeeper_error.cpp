@@ -12,8 +12,8 @@ ZooException::ZooException(int code, const char* what)
 : std::runtime_error(what), zoo_error_code_(code) {
 }
 
-ZooException ZooSystemErrorFromErrno(int errno) {
-  return ZooException(ZSYSTEMERROR, strerror(errno));
+ZooException ZooSystemErrorFromErrno(int ec) {
+  return ZooException(ZSYSTEMERROR, strerror(ec));
 }
 
 }
