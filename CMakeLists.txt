@@ -16,5 +16,5 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 add_subdirectory(zookeeper-cpp)
 
-add_subdirectory(app/leader-guard)
+#add_subdirectory(app/leader-guard)
 
