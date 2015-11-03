@@ -1,6 +1,7 @@
 #include "zookeeper.hpp"
 #include <cassert>
 #include <cerrno>
+#include <cstring>
 #include <mutex>
 #include "zookeeper_error.hpp"
 
