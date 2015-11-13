@@ -1,0 +1,9 @@
+language: C++
+
+before_install:
+  - sudo apt-get install libzookeeper-mt-dev
+
+script:
+  - cmake .
+  - make
+
