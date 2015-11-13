@@ -35,6 +35,7 @@ public:
   ZooKeeper& operator=(const ZooKeeper&) = delete;
 
   bool is_connected();
+  bool is_expired();
 
   bool Exists(const std::string& path, bool watch = false, NodeStat* = nullptr);
 
@@ -44,7 +45,13 @@ public:
                      const std::string& value = std::string(),
                      int flag = 0);
 
+  std::string CreateIfNotExists(const std::string& path,
+                                const std::string& value = std::string(),
+                                int flag = 0);
+
   void Delete(const std::string& path);
+
+  void DeleteIfExists(const std::string& path);
 
   void Set(const std::string&path, const std::string& value);
 

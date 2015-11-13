@@ -3,50 +3,10 @@
 #include <gtest/gtest.h>
 #include <stdlib.h>
 #include "zookeeper_mock.hpp"
+#include "zookeeper_unittest_helper.hpp"
 
 using namespace zookeeper;
 using namespace testing;
-
-const std::string ZOOKEEPER_DAEMON_PATH = "/Volumes/home/zengxg/projects/zookeeper-3.4.6/bin/zkServer.sh";
-const std::string ZOOKEEPER_HOSTS = "127.0.0.1:2181";
-
-static void StartZookeeper() {
-  auto cmd = ZOOKEEPER_DAEMON_PATH + " start";
-  system(cmd.c_str());
-}
-
-static void StopZookeeper() {
-  auto cmd = ZOOKEEPER_DAEMON_PATH + " stop";
-  system(cmd.c_str());
-}
-
-static void WaitForConnected(ZooKeeper& zk) {
-  while (!zk.is_connected()) {
-    sleep(1);
-  }
-}
-
-/*
-struct ZooKeeperTest : testing::Test {
-  MockZooWatcher watcher;
-  ZooKeeper zk;
-
-  ZooKeeperTest()
-  : zk("localhost:2181", &watcher) {
-    sleep(2);
-    EXPECT_CALL(watcher, OnConnected());
-  }
-};
-*/
-
-struct ZooKeeperTest : Test {
-  ZooKeeper zk;
-
-  ZooKeeperTest()
-  : zk("localhost:2181") {
-    WaitForConnected(zk);
-  }
-};
 
 TEST(ZooKeeper, ConstructWithBadArgument) {
   EXPECT_THROW(ZooKeeper zk(""), ZooException);
@@ -56,6 +16,12 @@ TEST(ZooKeeper, ConstructWithBadArgument) {
 TEST(ZooKeeper, ConstructAndConnected) {
   ZooKeeper zk("localhost:2181");
   sleep(1);
+  EXPECT_TRUE(zk.is_connected());
+}
+
+TEST(ZooKeeper, ConnectWithFailureNode) {
+  ZooKeeper zk("127.0.0.1:12345,127.0.01:2181");
+  sleep(10);
   EXPECT_TRUE(zk.is_connected());
 }
 
@@ -73,15 +39,41 @@ TEST_F(ZooKeeperTest, CreateThenDelete) {
   EXPECT_THROW(zk.Delete("/test"), ZooException);
 }
 
+TEST_F(ZooKeeperTest, CreateWithInvalidPath) {
+  EXPECT_THROW(zk.Create("/"), ZooException);
+  EXPECT_THROW(zk.Create("test"), ZooException);
+  EXPECT_THROW(zk.Create("/test/"), ZooException);
+  EXPECT_THROW(zk.Create("/test//abc"), ZooException);
+}
+
+TEST_F(ZooKeeperTest, CreateIfNotExists) {
+  EXPECT_EQ(zk.CreateIfNotExists("/"), "/");
+  EXPECT_EQ(zk.Create("/a"), "/a");
+  EXPECT_EQ(zk.CreateIfNotExists("/a"), "/a");
+
+  zk.Delete("/a");
+}
+
 TEST_F(ZooKeeperTest, DeleteNodeWithChildren) {
   zk.Create("/test");
   zk.Create("/test/test");
 
   EXPECT_THROW(zk.Delete("/test"), ZooException);
+
   zk.Delete("/test/test");
+  EXPECT_THROW(zk.Delete("/test/test"), ZooException);
+
   zk.Delete("/test");
+  EXPECT_THROW(zk.Delete("/test"), ZooException);
 
   EXPECT_FALSE(zk.Exists("/test"));
+}
+
+TEST_F(ZooKeeperTest, DeleteIfExists) {
+  zk.Create("/test");
+  zk.DeleteIfExists("/test");
+  EXPECT_FALSE(zk.Exists("/test"));
+  zk.DeleteIfExists("/test");
 }
 
 TEST_F(ZooKeeperTest, CreateSequence) {

@@ -47,6 +47,10 @@ bool ZooKeeper::is_connected() {
   return zoo_state(zoo_handle_) == ZOO_CONNECTED_STATE;
 }
 
+bool ZooKeeper::is_expired() {
+  return zoo_state(zoo_handle_) == ZOO_EXPIRED_SESSION_STATE;
+}
+
 void ZooKeeper::WatchHandler(int type, int state, const char* path) {
   // call global watcher
   if (!global_watcher_) return;
@@ -114,6 +118,30 @@ std::string ZooKeeper::Create(const std::string& path, const std::string& value,
   return path_buffer;
 }
 
+std::string ZooKeeper::CreateIfNotExists(const std::string& path, const std::string& value, int flag) {
+  std::string path_buffer;
+  path_buffer.resize(path.size() + 64);
+
+  auto zoo_code = zoo_create(zoo_handle_,
+                             path.c_str(),
+                             value.data(),
+                             value.size(),
+                             &ZOO_OPEN_ACL_UNSAFE,
+                             flag,
+                             const_cast<char*>(path_buffer.data()),
+                             path_buffer.size());
+
+  if (zoo_code == ZNODEEXISTS) {
+    assert(!(flag & ZOO_SEQUENCE));
+    return path;
+  }
+
+  CHECK_ZOOCODE_AND_THROW(zoo_code);
+
+  path_buffer.resize(strlen(path_buffer.data()));
+  return path_buffer;
+}
+
 void ZooKeeper::Delete(const std::string& path) {
   NodeStat stat;
   if (!Exists(path.c_str(), false, &stat)) {
@@ -121,6 +149,19 @@ void ZooKeeper::Delete(const std::string& path) {
   }
 
   auto zoo_code = zoo_delete(zoo_handle_, path.c_str(), stat.version);
+  CHECK_ZOOCODE_AND_THROW(zoo_code);
+}
+
+void ZooKeeper::DeleteIfExists(const std::string& path) {
+  NodeStat stat;
+  if (!Exists(path.c_str(), false, &stat)) {
+    return;
+  }
+
+  auto zoo_code = zoo_delete(zoo_handle_, path.c_str(), stat.version);
+  if (zoo_code == ZNONODE) {
+    return;
+  }
   CHECK_ZOOCODE_AND_THROW(zoo_code);
 }
 
@@ -173,7 +214,6 @@ std::vector<std::string> ZooKeeper::GetChildren(const std::string& parent_path, 
   // TODO: release child_vec
   return children;
 }
-
 
 }
 
