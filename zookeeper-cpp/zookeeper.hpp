@@ -18,7 +18,6 @@ public:
   virtual void OnChanged(const char* path) = 0;
   virtual void OnChildChanged(const char* path) = 0;
   virtual void OnNotWatching(const char* path) = 0;
-
 };
 
 typedef Stat NodeStat;
@@ -26,7 +25,8 @@ typedef Stat NodeStat;
 class ZooKeeper {
 public:
   ZooKeeper(const std::string& server_hosts,
-            ZooWatcher* global_watcher = nullptr);
+            ZooWatcher* global_watcher = nullptr,
+            int timeout_ms = 5 * 1000);
 
   ~ZooKeeper();
 

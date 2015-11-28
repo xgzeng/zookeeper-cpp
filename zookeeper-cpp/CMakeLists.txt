@@ -26,3 +26,4 @@ add_executable(zookeeper_unittest ${ZOOKEEPER_UNITTEST_SRCS})
 target_link_libraries(zookeeper_unittest
     zookeeper-cpp gtest gtest_main gmock)
 
+add_subdirectory(recipes)

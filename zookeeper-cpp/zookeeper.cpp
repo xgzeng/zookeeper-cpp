@@ -23,12 +23,17 @@ void set_default_debug_level() {
 }
 
 ZooKeeper::ZooKeeper(const std::string& server_hosts,
-                     ZooWatcher* global_watcher)
+                     ZooWatcher* global_watcher,
+                     int timeout_ms)
 : global_watcher_(global_watcher) {
   set_default_debug_level();
 
-  zoo_handle_ = zookeeper_init(server_hosts.c_str(), GlobalWatchFunc, 2 * 1000,
-                               nullptr, this, 0);
+  zoo_handle_ = zookeeper_init(server_hosts.c_str(),
+                               GlobalWatchFunc,
+                               timeout_ms,
+                               nullptr, // client id
+                               this,
+                               0);
   if (!zoo_handle_) {
     throw ZooSystemErrorFromErrno(errno);
   }
