@@ -4,6 +4,7 @@
 #include "zookeeper-cpp/zookeeper_unittest_helper.hpp"
 
 using namespace testing;
+using namespace zookeeper;
 
 TEST(LeaderElector, Join) {
   MockLeaderElectorHandler handler;

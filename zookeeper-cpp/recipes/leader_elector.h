@@ -3,6 +3,8 @@
 #include <zookeeper-cpp/zookeeper.hpp>
 #include <experimental/executor>
 
+namespace zookeeper {
+
 class LeaderElectorHandler {
 public:
   virtual void TakeLeadership() = 0;
@@ -77,3 +79,4 @@ private:
   std::string election_sequence_node_;
 };
 
+} // namespace zookeeper
