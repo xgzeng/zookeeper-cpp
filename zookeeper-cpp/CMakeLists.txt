@@ -8,9 +8,6 @@ set(ZOOKEEPER_SRCS
 add_library(zookeeper-cpp ${ZOOKEEPER_SRCS})
 target_link_libraries(zookeeper-cpp zookeeper_mt)
 
-target_compile_features(zookeeper-cpp
-    PRIVATE cxx_auto_type PUBLIC cxx_deleted_functions)
-
 # Tests
 include_directories(${GTEST_INCLUDE_DIRS} ${GMOCK_INCLUDE_DIRS})
 

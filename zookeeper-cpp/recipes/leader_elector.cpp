@@ -54,9 +54,11 @@ void LeaderElector::Refresh() {
       try {
         EnterElection();
       } catch(...) {
-        printf("EnterElection failed\n");
+        printf("EnterElection failed, try again later\n");
+        RefreshLater();
       }
     } else {
+      // exit election should not fail
       ExitElection();
     }
   } else if (zk_->is_expired()) {
@@ -144,13 +146,14 @@ void LeaderElector::OnElectionChanged() {
 }
 
 void LeaderElector::TakeLeadershipImpl() {
-  assert(!is_leader());
+  assert(is_elector_ && !is_leader());
   printf("I'm leader now\n");
   is_leader(true);
   leadership_handler_->TakeLeadership();
 }
 
 void LeaderElector::RevokeLeadershipImpl() {
+  assert(is_elector_ && is_leader());
   printf("My leadership is revoked\n");
   is_leader(false);
   if (is_elector_) {
@@ -159,6 +162,7 @@ void LeaderElector::RevokeLeadershipImpl() {
 }
 
 void LeaderElector::LeadershipChangedImpl(const std::string& leader_data) {
+  assert(is_elector_);
   printf("I'm follower, following %s\n", leader_data.c_str());
   leadership_handler_->LeadershipChanged(leader_data);
 }

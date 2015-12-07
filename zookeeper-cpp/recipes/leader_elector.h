@@ -14,7 +14,7 @@ public:
   virtual void LeadershipChanged(const std::string& current_leader) = 0;
 
 protected:
-  ~LeaderElectorHandler() {}
+  ~LeaderElectorHandler() = default;
 };
 
 class LeaderElector : public zookeeper::ZooWatcher {
